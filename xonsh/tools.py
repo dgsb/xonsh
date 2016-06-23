@@ -1562,17 +1562,6 @@ class CommandsCache(abc.Mapping):
         self._alias_checksum = None
         self._path_mtime = -1
 
-    @staticmethod
-    def get_possible_names(key):
-        if ON_WINDOWS:
-            key = key.upper()
-            return [
-                key + ext
-                for ext in ([''] + builtins.__xonsh_env__['PATHEXT'])
-            ]
-        else:
-            return [key]
-
     def __contains__(self, key):
         return key in self.all_commands
 
@@ -1584,6 +1573,20 @@ class CommandsCache(abc.Mapping):
 
     def __getitem__(self, key):
         return self.all_commands[key]
+
+    def is_empty(self):
+        return len(self._cmds_cache) == 0
+
+    @staticmethod
+    def get_possible_names(key):
+        if ON_WINDOWS:
+            key = key.upper()
+            return [
+                key + ext
+                for ext in ([''] + builtins.__xonsh_env__['PATHEXT'])
+            ]
+        else:
+            return [key]
 
     @property
     def all_commands(self):
