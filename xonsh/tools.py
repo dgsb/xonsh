@@ -1575,18 +1575,22 @@ class CommandsCache(abc.Mapping):
         return self.all_commands[key]
 
     def is_empty(self):
+        """Returns whether the cache is populated or not. Does not invalidate."""
         return len(self._cmds_cache) == 0
 
     @staticmethod
-    def get_possible_names(key):
+    def get_possible_names(name):
+        """Generates the possible `PATHEXT` extension variants of a given executable
+         name on Windows as a list, conserving the ordering in `PATHEXT`.
+         Returns a list as `name` being the only item in it on other platforms."""
         if ON_WINDOWS:
-            key = key.upper()
+            name = name.upper()
             return [
-                key + ext
+                name + ext
                 for ext in ([''] + builtins.__xonsh_env__['PATHEXT'])
             ]
         else:
-            return [key]
+            return [name]
 
     @property
     def all_commands(self):
@@ -1611,7 +1615,6 @@ class CommandsCache(abc.Mapping):
         self._path_mtime = max_mtime
         if cache_valid:
             return self._cmds_cache
-
         allcmds = {}
         for path in reversed(paths):
             # iterate backwards so that entries at the front of PATH overwrite
@@ -1619,7 +1622,6 @@ class CommandsCache(abc.Mapping):
             for cmd in executables_in(path):
                 key = cmd.upper() if ON_WINDOWS else cmd
                 allcmds[key] = (os.path.join(path, cmd), cmd in alss)
-
         only_alias = (None, True)
         for cmd in alss:
             if cmd not in allcmds:
@@ -1643,7 +1645,7 @@ class CommandsCache(abc.Mapping):
 
     def lazylen(self):
         """Returns the length of the current cache contents without the
-        potential to update the cache. This may not reflect precicesly
+        potential to update the cache. This may not reflect precisely
         what is on the $PATH.
         """
         return len(self._cmds_cache)
@@ -1661,12 +1663,10 @@ class CommandsCache(abc.Mapping):
             # Windows users expect to be able to execute files in the same
             # directory without `./`
             cwd = _get_cwd()
-
             local_bin = next((
                 full_name for full_name in possibilities
                 if os.path.isfile(full_name)
             ), None)
-
             if local_bin:
                 return os.path.abspath(os.path.relpath(local_bin, cwd))
 
@@ -1692,7 +1692,7 @@ WINDOWS_DRIVE_MATCHER = LazyObject(lambda: re.compile(r'^\w:'),
 
 
 def expand_case_matching(s):
-    """Expands a string to a case insenstive globable string."""
+    """Expands a string to a case insensitive globable string."""
     t = []
     openers = {'[', '{'}
     closers = {']', '}'}
